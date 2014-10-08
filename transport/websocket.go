@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/websocket"
 	log "llog"
 	"net/http"
+	"time"
 )
 
 var upgrade = websocket.Upgrader{
@@ -31,6 +32,15 @@ func (w *Websocket) WriteMessage(data []byte) error {
 	return w.conn.WriteMessage(websocket.TextMessage, data)
 }
 
-func (w *Websocket) ReadMessage(data []byte) error {
-	return w.conn.ReadMessage()
+func (w *Websocket) ReadMessage() ([]byte, error) {
+	_, data, err := w.conn.ReadMessage()
+	return data, err
+}
+
+func (w *Websocket) SetReadDeadline(t time.Time) error {
+	return w.conn.SetReadDeadline(t)
+}
+
+func (w *Websocket) SetWriteDeadline(t time.Time) error {
+	return w.conn.SetWriteDeadline(t)
 }

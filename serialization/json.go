@@ -8,6 +8,10 @@ import (
 type JSON struct {
 }
 
+func NewJSON() *JSON {
+	return new(JSON)
+}
+
 func (j *JSON) Encode(value []interface{}) ([]byte, error) {
 	return json.Marshal(value)
 }

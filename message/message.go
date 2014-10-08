@@ -1,11 +1,11 @@
 // message.go
 package message
 
-import (
-	"encoding/json"
-	"errors"
-)
+import "strconv"
 
+import ()
+
+// message
 const (
 	HELLO          = 1
 	WELCOME        = 2
@@ -42,64 +42,98 @@ const (
 	YIELD        = 70
 )
 
+// roler
+const (
+	PUBLISHER = 1 << iota
+	SUBSCRIBER
+	CALLER
+	CALLEE
+)
+
+const (
+	BROKER = 1 << iota
+	DEALER
+)
+
 type Response interface {
-	Array() *Message
+	Which() (int64, *MsgError)
+	Array() Message
 }
 
 type Message []interface{}
 
-func (m *Message) Which() (int64, error) {
+func (m Message) Which() (int64, *MsgError) {
 	which, ok := m[0].(int64)
 	if ok {
 		return which, nil
 	}
-	return nil, NewMsgerrorDetail(INVALIDARGUMENT, "the type of first element in Message is not int64.")
+	return 0, NewMsgErrorDetail(INVALIDARGUMENT, "the type of first element in Message is not int64.")
+}
+
+func (m Message) Array() Message {
+	return m
+}
+
+func (m Message) String() string {
+	which, merr := m.Which()
+	if merr != nil {
+		return merr.Error()
+	}
+	return strconv.Itoa(int(which))
 }
 
 const (
-	INVALIDURI             = "wamp.error.invalid_uri"
-	NOSUCHPROCEDURE        = "wamp.error.no_such_procedure"
-	PROCEDUREALREADYEXISTS = "wamp.error.procedure_already_exists"
-	NOSUCHREGISTRATION     = "wamp.error.no_such_registration"
-	NOSUCHSUBSCRIPTION     = "wamp.error.no_such_subscription"
-	INVALIDARGUMENT        = "wamp.error.invalid_argument"
-	SYSTEMSHUTDOWN         = "wamp.error.system_shutdown"
-	CLOSEREALM             = "wamp.error.close_realm"
-	GOODBYEANDOUT          = "wamp.error.goodbye_and_out"
-	NOTAUTHORIZED          = "wamp.error.not_authorized"
-	AUTHORIZATIONFAILED    = "wamp.error.authorization_failed"
-	NOSUCHREALM            = "wamp.error.no_such_realm"
-	NOSUCHROLE             = "wamp.error.no_such_role"
+	INVALIDURI             URL = "wamp.error.invalid_uri"
+	NOSUCHPROCEDURE        URL = "wamp.error.no_such_procedure"
+	PROCEDUREALREADYEXISTS URL = "wamp.error.procedure_already_exists"
+	NOSUCHREGISTRATION     URL = "wamp.error.no_such_registration"
+	NOSUCHSUBSCRIPTION     URL = "wamp.error.no_such_subscription"
+	INVALIDARGUMENT        URL = "wamp.error.invalid_argument"
+	SYSTEMSHUTDOWN         URL = "wamp.error.system_shutdown"
+	CLOSEREALM             URL = "wamp.error.close_realm"
+	GOODBYEANDOUT          URL = "wamp.error.goodbye_and_out"
+	NOTAUTHORIZED          URL = "wamp.error.not_authorized"
+	AUTHORIZATIONFAILED    URL = "wamp.error.authorization_failed"
+	NOSUCHREALM            URL = "wamp.error.no_such_realm"
+	NOSUCHROLE             URL = "wamp.error.no_such_role"
 )
 
 type URL string
 
-func (u *URL) invalid() bool {
+func (u URL) invalid() bool {
 	return true
 }
 
-type msgerror struct {
+func (u URL) string() string {
+	return string(u)
+}
+
+type MsgError struct {
 	Reason URL
 	Detail map[string]interface{}
 }
 
-func NewMsgerror(reason URL) error {
-	return &msgerror{
+func NewMsgError(reason URL) *MsgError {
+	e := &MsgError{
 		Reason: reason,
-		Detail: {},
 	}
+	return e
 }
 
-func NewMsgerrorDetail(reason URL, msg string) error {
-	return &msgerror{
+func NewMsgErrorDetail(reason URL, msg string) *MsgError {
+	e := &MsgError{
 		Reason: reason,
-		Detail: {"message": msg},
 	}
+	e.Detail["message"] = msg
+	return e
 }
 
-func (e *msgerror) Error() string {
+func (e *MsgError) Error() string {
 	if msg, ok := e.Detail["message"]; ok {
-		return e.Reason + e.Detail["message"]
+		if s, yes := msg.(string); yes {
+			return e.Reason.string() + s
+		}
+		return e.Reason.string() + " detail message is not string"
 	}
-	return e.Reason
+	return e.Reason.string()
 }

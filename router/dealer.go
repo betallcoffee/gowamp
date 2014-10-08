@@ -1,5 +1,9 @@
 // dealer.go
 package router
 
-type Router struct {
+type Dealer struct {
+}
+
+func NewDealer() *Dealer {
+	return new(Dealer)
 }

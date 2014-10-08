@@ -1,7 +1,7 @@
 // error.go
 package message
 
-type error_ struct {
+type Error struct {
 	which    int64
 	reqWhich int64
 	reqID    int64
@@ -12,8 +12,8 @@ type error_ struct {
 }
 
 func NewError(reqWhich, reqID int64, details map[string]interface{},
-	url URL, args []interface{}, argsKw map[string]interface{}) *error_ {
-	return &error_{
+	url URL, args []interface{}, argsKw map[string]interface{}) *Error {
+	return &Error{
 		which:    ERROR,
 		reqWhich: reqWhich,
 		reqID:    reqID,
@@ -24,6 +24,9 @@ func NewError(reqWhich, reqID int64, details map[string]interface{},
 	}
 }
 
-func (e *error_) Array() *Message {
+func (e *Error) Which() (int64, *MsgError) {
+	return e.which, nil
+}
+func (e *Error) Array() Message {
 	return []interface{}{e.which, e.reqWhich, e.reqID, e.details, e.url, e.args, e.argsKw}
 }
